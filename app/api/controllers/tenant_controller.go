@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/brunobotter/feature-flag/api/http"
 	"github.com/brunobotter/feature-flag/api/requests"
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/usecase"
@@ -19,7 +20,7 @@ func NewTenantController(tenantUseCase usecase.TenantUseCase, logger logger.Logg
 	}
 }
 
-func (c *TenantController) CreateTenant(request requests.TenantRequest) error {
+func (c *TenantController) CreateTenant(request requests.TenantRequest) *http.HttpResponse {
 
 	cmd := command.CreateTenant{
 		Name: request.Name,
@@ -27,7 +28,7 @@ func (c *TenantController) CreateTenant(request requests.TenantRequest) error {
 
 	err := c.tenantUseCase.Create(request.Request.Context(), cmd, c.log)
 	if err != nil {
-		return nil
+		return http.BadRequest(err.Error())
 	}
 	return nil
 }
