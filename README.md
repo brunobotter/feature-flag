@@ -1,197 +1,261 @@
-# Feature flag
+# Feature Flag
 
+------------------------------------------------------------------------
 
-Fase 1 — CRUD mínimo (Admin API) + Repositórios
+# 🟢 Fase 1 --- CRUD mínimo (Admin API) + Repositórios
 
-Objetivo: conseguir criar tenant, listar, criar feature, ligar/desligar.
+## 🎯 Objetivo
 
-Epico B — Repositórios Postgres
+Conseguir criar tenant, listar, criar feature e ligar/desligar por
+ambiente.
 
-TenantRepository
+------------------------------------------------------------------------
 
-Create, List, GetByID
+## 📦 Épico B --- Repositórios Postgres
 
-EnvironmentRepository
+### TenantRepository
 
-ListByTenant, GetByName
+-   Create
+-   List
+-   GetByID
 
-FeatureRepository
+### EnvironmentRepository
 
-Create, ListByTenant, GetByKey
+-   ListByTenant
+-   GetByName
 
-RuleRepository
+### FeatureRepository
 
-Upsert(feature_id, env_id, enabled)
+-   Create
+-   ListByTenant
+-   GetByKey
 
-GetByFeatureAndEnv
+### RuleRepository
 
-ListEnabledByTenantEnv (pro /flags)
+-   Upsert(feature_id, env_id, enabled)
+-   GetByFeatureAndEnv
+-   ListEnabledByTenantEnv (usado no /flags)
 
-Importante (nível sênior): mapear erro de unique do Postgres → erro de domínio (409), não 500.
+### ⚠️ Importante (nível sênior)
 
-Epico A4 — envs padrão por tenant
+Mapear erro de UNIQUE do Postgres → erro de domínio (HTTP 409), nunca
+500 genérico.
+
+------------------------------------------------------------------------
+
+## 🟡 Épico A4 --- Environments padrão por tenant
 
 Implementar no usecase/CreateTenant:
 
-transação: cria tenant + dev/staging/prod
+-   Transação criando:
+    -   tenant
+    -   dev
+    -   staging
+    -   prod
+-   Rollback automático se qualquer insert falhar
 
-rollback se falhar
+------------------------------------------------------------------------
 
-Endpoints Admin (HTTP)
+## 🌐 Endpoints Admin (HTTP)
 
-POST /tenants
-
+POST /tenants\
 GET /tenants
 
-POST /tenants/:tenantId/features
-
+POST /tenants/:tenantId/features\
 GET /tenants/:tenantId/features
 
-PUT /tenants/:tenantId/features/:key (editar descrição)
+PUT /tenants/:tenantId/features/:key\
+PUT /tenants/:tenantId/features/:key/environments/:env/toggle
 
-PUT /tenants/:tenantId/features/:key/environments/:env/toggle (enabled true/false)
+------------------------------------------------------------------------
 
-Resultado da fase 1: você já tem um “LaunchDarkly mini” administrável via API.
+### ✅ Resultado da Fase 1
 
-Fase 2 — Evaluate Flags (core) + Cache Redis
+Você já tem um "LaunchDarkly mini" administrável via API.
 
-Objetivo: entregar o endpoint que os apps clientes vão consumir.
+------------------------------------------------------------------------
 
-Epico C — Evaluate
+# 🟡 Fase 2 --- Evaluate Flags (core) + Cache Redis
+
+## 🎯 Objetivo
+
+Entregar o endpoint que os apps clientes vão consumir.
+
+------------------------------------------------------------------------
+
+## 📦 Épico C --- Evaluate
 
 GET /flags?tenant=...&env=...
 
-valida tenant existe
+### Regras
 
-valida env pertence ao tenant
+-   Validar tenant existe
+-   Validar env pertence ao tenant
+-   Retornar map\[string\]bool
+-   Default: se não houver rule → false
 
-retorna map[string]bool
+------------------------------------------------------------------------
 
-default: se não tem rule → false
+## ⚡ Cache Redis
 
-Cache Redis
+Key padrão:
 
-key: flags:{tenant}:{env}
+flags:{tenant}:{env}
 
-TTL (ex: 30s / 60s no começo)
+-   TTL (30--60s inicialmente)
+-   Cache hit → não consulta Postgres
+-   Cache miss → consulta Postgres → salva JSON
 
-cache miss → busca Postgres → salva JSON
+------------------------------------------------------------------------
 
-Invalidação
+## 🔄 Invalidação
 
-Ao toggle: DEL flags:{tenant}:{env}
+Ao executar toggle:
 
-Resultado da fase 2: seu serviço já resolve flags rápido e pronto pra uso real.
+DEL flags:{tenant}:{env}
 
-Fase 3 — Frontend Admin (React)
+------------------------------------------------------------------------
 
-Objetivo: parar de depender de Postman/Insomnia.
+### ✅ Resultado da Fase 2
 
-Mínimo do painel
+Serviço performático e pronto para uso real.
 
-Tela Tenants:
+------------------------------------------------------------------------
 
-listar + criar
+# 🔵 Fase 3 --- Frontend Admin (React)
 
-Tela Features do Tenant:
+## 🎯 Objetivo
 
-listar + criar + editar descrição
+Eliminar dependência de Postman/Insomnia.
 
-Tela de Toggle por env (dev/staging/prod)
+------------------------------------------------------------------------
 
-grid: feature x env
+## 🖥 Funcionalidades mínimas
 
-toggle on/off
+### Tela Tenants
 
-Qualidade
+-   Listar
+-   Criar
 
-Client HTTP (axios/fetch) com tipagem
+### Tela Features
 
-Estados: loading/erro/sucesso
+-   Listar
+-   Criar
+-   Editar descrição
 
-Toasts e validação simples
+### Tela Toggle por Environment
 
-Resultado: você administra tudo por UI.
+-   Grid feature × env
+-   Toggle on/off
 
-Fase 4 — Realtime (WebSocket / SSE)
+------------------------------------------------------------------------
 
-Objetivo: quando uma flag muda, o painel atualiza sem refresh (e opcionalmente os clientes também).
+## 🧠 Qualidade esperada
 
-Canal: tenant:{id}:env:{env}
+-   Client HTTP tipado
+-   Estados: loading / error / success
+-   Toasts
+-   Validação básica
 
-Ao toggle:
+------------------------------------------------------------------------
 
-publica evento via Redis PubSub (ou só broadcast no processo)
+### ✅ Resultado da Fase 3
 
-Frontend assina e atualiza a tabela ao vivo
+Administração completa via interface gráfica.
 
-Isso é muito “senior”: consistência, invalidação e UX.
+------------------------------------------------------------------------
 
-Fase 5 — Rollout gradual e targeting
+# 🟣 Fase 4 --- Realtime (WebSocket / SSE)
 
-Objetivo: sair do “enabled bool” e virar feature flag de verdade.
+## 🎯 Objetivo
 
-Evoluções na modelagem:
+Atualizar painel automaticamente quando uma flag mudar.
 
-feature_rules vira algo como:
+Canal padrão:
 
-rule_type: BOOLEAN | PERCENTAGE | TARGETING
+tenant:{id}:env:{env}
 
-percentage: 0..100
+### Fluxo
 
-conditions JSONB (ex: por tenant, por userId, por plano, etc)
+-   Toggle publica evento (Redis PubSub ou broadcast local)
+-   Frontend assina e atualiza em tempo real
 
-Evaluate passa a aceitar:
+------------------------------------------------------------------------
 
-GET /flags?tenant=...&env=...&userId=123&attributes=...
-ou POST /evaluate com body (melhor quando tiver targeting)
+### 🔥 Diferencial
 
-Regras:
+Consistência + invalidação + UX moderna.
 
-Percentage rollout (hash determinístico com userId)
+------------------------------------------------------------------------
 
-Targeting por lista allow/deny
+# 🟠 Fase 5 --- Rollout gradual e Targeting
 
-Prioridades (order)
+## 🎯 Objetivo
 
-Fase 6 — Auditoria + versionamento
+Evoluir de booleano simples para sistema completo de feature flags.
 
-Objetivo: rastrear quem mudou o quê e permitir “voltar”.
+------------------------------------------------------------------------
 
-audit_logs (actor, ação, antes/depois, timestamp)
+## Evolução do modelo
 
-“Change request id”
+feature_rules passa a ter:
 
-Opcional: snapshots/versionamento por feature/env
+-   rule_type: BOOLEAN \| PERCENTAGE \| TARGETING
+-   percentage: 0--100
+-   conditions JSONB
 
-Fase 7 — SDK Go (e depois outros)
+------------------------------------------------------------------------
 
-Objetivo: facilitar adoção.
+## Evaluate passa a aceitar:
 
-SDK Go:
+GET /flags?tenant=...&env=...&userId=123&attributes=... ou POST
+/evaluate
 
-busca flags do serviço
+------------------------------------------------------------------------
 
-cache local
+## Regras implementadas
 
-fallback (fail-open/fail-closed)
+-   Percentage rollout (hash determinístico por userId)
+-   Targeting allow/deny
+-   Prioridade de regras
 
-refresh em background / SSE
+------------------------------------------------------------------------
 
-Fase 8 — Produção de verdade (observabilidade e segurança)
+# 🔴 Fase 6 --- Auditoria + Versionamento
 
-Auth do Admin (JWT)
+## 🎯 Objetivo
 
-RBAC (admin/reader)
+Rastrear mudanças e permitir rollback.
 
-Rate limit
+-   audit_logs (actor, ação, antes/depois, timestamp)
+-   Change request ID
+-   Snapshots por feature/env (opcional)
 
-Metrics (Prometheus)
+------------------------------------------------------------------------
 
-Tracing (OpenTelemetry)
+# 🟤 Fase 7 --- SDK Go
 
-Logs estruturados
+## 🎯 Objetivo
 
-CI (lint/test/build)
+Facilitar adoção nos serviços clientes.
 
-Migrations automatizadas no deploy
+SDK deve ter:
+
+-   Busca automática de flags
+-   Cache local
+-   Fail-open / Fail-closed
+-   Refresh em background
+-   Suporte a SSE
+
+------------------------------------------------------------------------
+
+# ⚫ Fase 8 --- Produção (Observabilidade e Segurança)
+
+-   Auth JWT (Admin)
+-   RBAC
+-   Rate limiting
+-   Prometheus
+-   OpenTelemetry
+-   Logs estruturados
+-   CI/CD
+-   Migrations automáticas no deploy
