@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -22,15 +23,20 @@ func Read() (*Config, error) {
 	v.SetConfigType("env")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetDefault("server.port", 8080)
+	v.SetDefault("server.host", "0.0.0.0")
 
-	v.BindEnv("server.port", "SERVER_PORT")
-	v.BindEnv("server.host", "SERVER_HOST")
+	v.BindEnv("server.port", "SERVER_PORT", "PORT")
+	v.BindEnv("server.host", "SERVER_HOST", "HOST")
 	v.BindEnv("app_name", "APP_NAME")
 	v.BindEnv("env", "env")
 	v.BindEnv("database.url", "DATABASE_URL")
 	err := v.ReadInConfig()
-	if err != nil && errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		return nil, err
+	if err != nil {
+		var configNotFound viper.ConfigFileNotFoundError
+		if !errors.As(err, &configNotFound) && !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
 	}
 
 	conf := Config{}
