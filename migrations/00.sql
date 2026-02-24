@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   name        TEXT NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+); 
 
 -- (Opcional) evitar tenants duplicados por nome
 CREATE UNIQUE INDEX IF NOT EXISTS ux_tenants_name ON tenants (lower(name));
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS environments (
   CONSTRAINT ux_env_tenant_name UNIQUE (tenant_id, name),
 
   -- Restringe valores válidos (fase 1)
-  CONSTRAINT chk_environment_name CHECK (name IN ('dev', 'staging', 'prod'))
+  CONSTRAINT chk_environment_name CHECK (name IN ('dev', 'stg', 'prod'))
 );
 
 CREATE INDEX IF NOT EXISTS ix_env_tenant_id ON environments (tenant_id);

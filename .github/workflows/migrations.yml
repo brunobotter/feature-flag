@@ -1,0 +1,47 @@
+name: Validate Migrations
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate:
+    name: Run SQL migrations in PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: feature_flag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Execute migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/feature_flag?sslmode=disable
+        run: |
+          chmod +x migrator/run-migrations.sh
+          ./migrator/run-migrations.sh
+
+      - name: Validate tables exist
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/feature_flag?sslmode=disable
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "\dt"
