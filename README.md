@@ -1,188 +1,197 @@
 # Feature flag
 
-ÉPICO A — Banco & Migrations (Postgres)
-História A1 — “Como dev, quero subir Postgres local via Docker”
 
-Tarefas
+Fase 1 — CRUD mínimo (Admin API) + Repositórios
 
- Adicionar serviço postgres no docker-compose.yml
+Objetivo: conseguir criar tenant, listar, criar feature, ligar/desligar.
 
- Configurar volume persistente (não perder dados)
+Epico B — Repositórios Postgres
 
- Expor porta (ex: 5432) apenas se necessário
+TenantRepository
 
- Criar usuário, senha, db via env
+Create, List, GetByID
 
- Criar healthcheck do Postgres no compose
+EnvironmentRepository
 
-Aceite
+ListByTenant, GetByName
 
- docker compose up -d postgres sobe sem erro
+FeatureRepository
 
- psql/DBeaver conecta usando as vars do .env
+Create, ListByTenant, GetByKey
 
-História A2 — “Como dev, quero ter migrations versionadas para criar o schema”
+RuleRepository
 
-Tarefas
+Upsert(feature_id, env_id, enabled)
 
- Escolher ferramenta (migrate/goose/atlas) e padronizar pasta migrations/
+GetByFeatureAndEnv
 
- Criar 0001_init.up.sql (script acima)
+ListEnabledByTenantEnv (pro /flags)
 
- Criar 0001_init.down.sql
+Importante (nível sênior): mapear erro de unique do Postgres → erro de domínio (409), não 500.
 
- Adicionar comando make migrate-up e make migrate-down
+Epico A4 — envs padrão por tenant
 
- (Opcional) Container migrate no compose
+Implementar no usecase/CreateTenant:
 
-Aceite
+transação: cria tenant + dev/staging/prod
 
- migrate up cria todas as tabelas
+rollback se falhar
 
- migrate down 1 remove tudo com sucesso
+Endpoints Admin (HTTP)
 
- Rodar “up” duas vezes não dá erro (idempotência ok)
+POST /tenants
 
-História A3 — “Como dev, quero garantir integridade do domínio no banco”
+GET /tenants
 
-Tarefas
+POST /tenants/:tenantId/features
 
- Confirmar constraints (unicidade tenant+key / rule unique)
+GET /tenants/:tenantId/features
 
- Confirmar check constraints (env name / key regex)
+PUT /tenants/:tenantId/features/:key (editar descrição)
 
- Criar índices principais
+PUT /tenants/:tenantId/features/:key/environments/:env/toggle (enabled true/false)
 
- Garantir FK com ON DELETE CASCADE (limpeza consistente)
+Resultado da fase 1: você já tem um “LaunchDarkly mini” administrável via API.
 
-Aceite
+Fase 2 — Evaluate Flags (core) + Cache Redis
 
- Não consigo inserir feature.key inválida
+Objetivo: entregar o endpoint que os apps clientes vão consumir.
 
- Não consigo criar duas features iguais no mesmo tenant
+Epico C — Evaluate
 
- Não consigo criar duas rules iguais (feature, env)
+GET /flags?tenant=...&env=...
 
-História A4 — “Como dev, quero modelar environments padrão por tenant”
+valida tenant existe
 
-Tarefas
+valida env pertence ao tenant
 
- Decidir se envs são:
+retorna map[string]bool
 
- Criados por seed manual, ou
+default: se não tem rule → false
 
- Criados automaticamente no usecase CreateTenant
+Cache Redis
 
- Se for automático:
+key: flags:{tenant}:{env}
 
- Implementar transação: cria tenant + 3 envs
+TTL (ex: 30s / 60s no começo)
 
- Garantir rollback se qualquer insert falhar
+cache miss → busca Postgres → salva JSON
 
-Aceite
+Invalidação
 
- Todo tenant novo já nasce com dev/staging/prod
+Ao toggle: DEL flags:{tenant}:{env}
 
-ÉPICO B — Persistência (Repos) para suportar o CRUD
-História B1 — “Como dev, quero repositório de Tenant”
+Resultado da fase 2: seu serviço já resolve flags rápido e pronto pra uso real.
 
-Tarefas
+Fase 3 — Frontend Admin (React)
 
- Interface TenantRepository (Create/List/GetByID)
+Objetivo: parar de depender de Postman/Insomnia.
 
- Implementação Postgres
+Mínimo do painel
 
- Queries com RETURNING *
+Tela Tenants:
 
- Teste unitário com mock (ou integração com db)
+listar + criar
 
-Aceite
+Tela Features do Tenant:
 
- Consigo criar e listar tenants com dados coerentes
+listar + criar + editar descrição
 
-História B2 — “Como dev, quero repositório de Feature”
+Tela de Toggle por env (dev/staging/prod)
 
-Tarefas
+grid: feature x env
 
- Interface FeatureRepository (Create/ListByTenant/Update)
+toggle on/off
 
- Implementar Postgres
+Qualidade
 
- Tratar erro de unique (tenant_id, key) e retornar erro de domínio
+Client HTTP (axios/fetch) com tipagem
 
-Aceite
+Estados: loading/erro/sucesso
 
- Criar feature dup retorna erro tratável (não 500 genérico)
+Toasts e validação simples
 
-História B3 — “Como dev, quero repositório de Rules (enabled)”
+Resultado: você administra tudo por UI.
 
-Tarefas
+Fase 4 — Realtime (WebSocket / SSE)
 
- Interface FeatureRuleRepository:
+Objetivo: quando uma flag muda, o painel atualiza sem refresh (e opcionalmente os clientes também).
 
- Upsert (feature_id, env_id) → enabled
+Canal: tenant:{id}:env:{env}
 
- ListByTenantAndEnv (pro EvaluateFlags)
+Ao toggle:
 
- Implementar query de upsert:
+publica evento via Redis PubSub (ou só broadcast no processo)
 
- INSERT ... ON CONFLICT ... DO UPDATE
+Frontend assina e atualiza a tabela ao vivo
 
-Aceite
+Isso é muito “senior”: consistência, invalidação e UX.
 
- Toggle funciona tanto se regra não existe quanto se já existe
+Fase 5 — Rollout gradual e targeting
 
-ÉPICO C — Evaluate Flags (coração da fase 1)
-História C1 — “Como cliente, quero obter flags de um tenant+env via endpoint /flags”
+Objetivo: sair do “enabled bool” e virar feature flag de verdade.
 
-Tarefas
+Evoluções na modelagem:
 
- Definir contrato do endpoint: GET /flags?tenant=...&env=...
+feature_rules vira algo como:
 
- Validar tenant e env (existem? env pertence ao tenant?)
+rule_type: BOOLEAN | PERCENTAGE | TARGETING
 
- Query no banco que retorna key + enabled
+percentage: 0..100
 
- Responder JSON map[string]bool
+conditions JSONB (ex: por tenant, por userId, por plano, etc)
 
-Aceite
+Evaluate passa a aceitar:
 
- Endpoint retorna todas as features do tenant com status do env
+GET /flags?tenant=...&env=...&userId=123&attributes=...
+ou POST /evaluate com body (melhor quando tiver targeting)
 
- Se uma feature não tiver rule, retorna false (default)
+Regras:
 
-História C2 — “Como sistema, quero usar Redis para cachear o resultado de /flags”
+Percentage rollout (hash determinístico com userId)
 
-Tarefas
+Targeting por lista allow/deny
 
- Conectar Redis (client)
+Prioridades (order)
 
- Definir key flags:{tenant}:{env}
+Fase 6 — Auditoria + versionamento
 
- Implementar:
+Objetivo: rastrear quem mudou o quê e permitir “voltar”.
 
- Cache hit → retorna sem bater no Postgres
+audit_logs (actor, ação, antes/depois, timestamp)
 
- Cache miss → busca Postgres → seta cache com TTL
+“Change request id”
 
- Padronizar serialização (JSON)
+Opcional: snapshots/versionamento por feature/env
 
-Aceite
+Fase 7 — SDK Go (e depois outros)
 
- Segunda chamada de /flags é mais rápida (cache hit)
+Objetivo: facilitar adoção.
 
- TTL funciona (expira e refaz)
+SDK Go:
 
-História C3 — “Como admin, ao alterar uma flag, quero invalidar o cache”
+busca flags do serviço
 
-Tarefas
+cache local
 
- No usecase de toggle, deletar flags:{tenant}:{env}
+fallback (fail-open/fail-closed)
 
- Garantir tenant/env corretos (evitar deletar cache errado)
+refresh em background / SSE
 
- Teste de invalidação (ao menos unit)
+Fase 8 — Produção de verdade (observabilidade e segurança)
 
-Aceite
+Auth do Admin (JWT)
 
- Após toggle, /flags reflete mudança imediatamente
+RBAC (admin/reader)
+
+Rate limit
+
+Metrics (Prometheus)
+
+Tracing (OpenTelemetry)
+
+Logs estruturados
+
+CI (lint/test/build)
+
+Migrations automatizadas no deploy
