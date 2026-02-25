@@ -17,7 +17,7 @@ func RequestLogger(log logger.Logger) echo.MiddlewareFunc {
 			duration := time.Since(start)
 			status := c.Response().Status
 			if err != nil {
-				log.ErrorF(
+				log.Errorf(
 					"request_error method=%s path=%s query=%s status=%d duration_ms=%d remote_ip=%s user_agent=%s error=%v",
 					req.Method,
 					c.Path(),
@@ -32,7 +32,7 @@ func RequestLogger(log logger.Logger) echo.MiddlewareFunc {
 			}
 
 			if status >= 400 {
-				log.ErrorF(
+				log.Errorf(
 					"request_failed method=%s path=%s query=%s status=%d duration_ms=%d remote_ip=%s user_agent=%s",
 					req.Method,
 					c.Path(),

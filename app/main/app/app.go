@@ -135,6 +135,5 @@ func (app *Application) shutdown() {
 	app.wg.Wait()
 	var log logger.Logger
 	app.container.Resolve(&log)
-	log.Sync()
 	app.shutdownProviders()
 }

@@ -1,11 +1,12 @@
 package repo
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"context"
 
-type TenantRepo struct {
-	db *pgxpool.Pool
-}
+	"github.com/brunobotter/feature-flag/application/command"
+	"github.com/brunobotter/feature-flag/application/domain"
+)
 
-func NewTenantRepo(db *pgxpool.Pool) *TenantRepo {
-	return &TenantRepo{db: db}
+type TenantRepository interface {
+	Create(ctx context.Context, cmd command.CreateTenant) (tenant *domain.TenantDomain, err error)
 }

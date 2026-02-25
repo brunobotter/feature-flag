@@ -5,6 +5,11 @@ func MustSingleton(c Container, resolver interface{}) {
 		panic(err)
 	}
 }
+func MustNamedSingleton(c Container, name string, resolver interface{}) {
+	if err := c.NamedSingleton(name, resolver); err != nil {
+		panic(err)
+	}
+}
 
 // MustCall wraps the `Call` method and panics on errors instead of returning the errors.
 func MustCall(c Container, receiver interface{}) any {

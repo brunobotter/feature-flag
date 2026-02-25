@@ -19,6 +19,6 @@ func (p *ConfigServiceProvider) Register(c container.Container) {
 	})
 
 	c.Singleton(func(cfg *config.Config) logger.Logger {
-		return logger.NewLoggerZap(cfg.App_Name)
+		return logger.NewJammesLogger(cfg.App_Name, cfg.Env, false)
 	})
 }

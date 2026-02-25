@@ -6,6 +6,7 @@ type Container interface {
 	Singleton(resolver interface{})
 	Resolve(abstraction interface{})
 	NamedResolve(abstraction interface{}, name string)
+	NamedSingleton(name string, resolver interface{})
 	Call(function interface{}) any
 }
 
@@ -15,6 +16,9 @@ type golobbyContainerAdapter struct {
 
 func (a *golobbyContainerAdapter) Singleton(resolver interface{}) {
 	golobby.MustSingleton(a.container, resolver)
+}
+func (a *golobbyContainerAdapter) NamedSingleton(name string, resolver interface{}) {
+	golobby.MustNamedSingleton(a.container, name, resolver)
 }
 
 func (a *golobbyContainerAdapter) Resolve(abstraction interface{}) {

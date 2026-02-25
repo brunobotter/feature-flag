@@ -139,6 +139,9 @@ func (c Container) Reset() {
 func (c Container) Singleton(resolver interface{}) error {
 	return c.bind(resolver, "", true, false)
 }
+func (c Container) NamedSingleton(name string, resolver interface{}) error {
+	return c.bind(resolver, name, true, false)
+}
 
 // Call takes a receiver function with one or more arguments of the abstractions (interfaces).
 // It invokes the receiver function and passes the related concretes.

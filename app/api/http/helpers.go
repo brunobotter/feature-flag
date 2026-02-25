@@ -11,7 +11,7 @@ import (
 func HandleError(ctx context.Context, errorToHandle error, log logger.Logger) *HttpResponse {
 	originalError := application.GetOriginalError(errorToHandle)
 
-	log.ErrorF("Error handled: %s", errorToHandle.Error())
+	log.Errorf("Error handled: %s", errorToHandle.Error())
 
 	if errors.As(originalError, &application.NotFoundApplicationError{}) {
 		return NotFound(originalError.Error())

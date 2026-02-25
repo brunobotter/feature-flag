@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/brunobotter/feature-flag/api/middlewares"
+	"github.com/brunobotter/feature-flag/main/adapters"
 	appmiddleware "github.com/brunobotter/feature-flag/main/server/middleware"
+	"github.com/brunobotter/feature-flag/main/server/router"
 
 	"github.com/brunobotter/feature-flag/infra/logger"
 	"github.com/brunobotter/feature-flag/main/config"
 	"github.com/brunobotter/feature-flag/main/container"
-	"github.com/brunobotter/feature-flag/main/server/router"
 	"github.com/labstack/echo/v4"
 	emw "github.com/labstack/echo/v4/middleware"
 )
@@ -36,7 +38,6 @@ func NewServer(container container.Container) (*Server, error) {
 
 func (s *Server) setup() {
 	s.echo.HideBanner = true
-	// CORS liberado para origens configuradas no front durante desenvolvimento/integração.
 	s.echo.Use(emw.CORSWithConfig(emw.CORSConfig{
 		AllowOriginFunc: func(origin string) (bool, error) {
 			return origin != "", nil
@@ -50,7 +51,15 @@ func (s *Server) setup() {
 	var log logger.Logger
 	s.container.Resolve(&log)
 	s.echo.Use(appmiddleware.RequestLogger(log))
-	router.RegisterRouter(s.echo, cfg, s.container)
+	adapterRouter := adapters.NewEchoRouterAdapter(s.echo)
+
+	s.container.NamedSingleton("Routes", func() router.Router {
+		return adapterRouter.Group("/api/v1/", func(group router.RouteGroup) {
+			group.Use(middlewares.CommonMiddlewares(s.logger, s.config)...)
+		})
+	})
+
+	s.container.Call(s.setupApiRouter)
 }
 
 func (s *Server) Run(ctx context.Context) {
