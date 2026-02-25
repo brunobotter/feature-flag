@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/brunobotter/feature-flag/application"
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/domain"
 	"github.com/brunobotter/feature-flag/application/service"
@@ -28,11 +29,11 @@ type tenantUseCase struct {
 func (u *tenantUseCase) Create(context context.Context, cmd command.CreateTenant, log logger.Logger) (*domain.TenantDomain, error) {
 	err := cmd.Validate()
 	if err != nil {
-		return nil, err
+		return nil, application.Wrap(err)
 	}
 	tenant, err := u.service.Create(context, cmd)
 	if err != nil {
-		return nil, err
+		return nil, application.Wrap(err)
 	}
 	return tenant, nil
 }

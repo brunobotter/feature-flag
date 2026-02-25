@@ -1,6 +1,7 @@
 package application
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -13,31 +14,146 @@ var (
 	TimeoutExceededApplicationErrorType = "TimeoutExceededApplicationError"
 	IntegrationApplicationErrorType     = "IntegrationApplicationError"
 	ValidationApplicationErrorType      = "ValidationApplicationError"
-	BadRequestApplicationErrorType      = "BadRequestApplicationError"
+	MaintenanceErrorType                = "MaintenanceError"
+	ManyRequestsApplicationErrorType    = "ManyRequestsApplicationError"
+	UnauthorizedApplicationErrorType    = "UnauthorizedApplicationError"
 	ForbiddenApplicationErrorType       = "ForbiddenApplicationError"
+	BadRequestErrorType                 = "BadRequestError"
+)
+
+const (
+	FraudGeneric                   string = "CO100"
+	FraudLimitCPFsPerPhone         string = "CO101"
+	FraudLimitPhonesPerCPF         string = "CO102"
+	FraudLimitSubmissionsPerPhone  string = "CO103"
+	FraudLimitIP                   string = "CO104"
+	FraudBlockedByRecaptcha        string = "CO105"
+	IntegrationGeneric             string = "CO200"
+	IntegrationEQ3                 string = "CO201"
+	IntegrationFlow                string = "CO202"
+	IntegrationOrchestrator        string = "CO203"
+	IntegrationProfessionsAPI      string = "CO204"
+	IntegrationCEPAPI              string = "CO205"
+	IntegrationCMS                 string = "CO211"
+	IntegrationOTPAPI              string = "CO206"
+	IntegrationBiometrics          string = "CO207"
+	IntegrationRecaptcha           string = "CO208"
+	IntegrationSts                 string = "CO209"
+	IntegrationDemocratizationData string = "CO210"
+	TimeoutExceededGeneric         string = "CO300"
+	TimeoutExceededEQ3             string = "CO301"
+	TimeoutExceededFlow            string = "CO302"
+	TimeoutExceededOrch            string = "CO303"
+	TimeoutExceededProfessionsAPI  string = "CO304"
+	TimeoutExceededCEPAPI          string = "CO305"
+	TimeoutExceededOTPAPI          string = "CO306"
+	TimeoutExceededBiometrics      string = "CO307"
+	TimeoutExceededRecaptcha       string = "CO308"
+	ValidationDomain               string = "CO400"
+	ValidationRequired             string = "CO401"
+	InvalidStep                    string = "CO402"
+	InvalidOtp                     string = "CO403"
+	InvalidStruct                  string = "CO500"
+	ServiceUnavailable             string = "CO600"
+	BiometricsKeyNotFound          string = "CO701"
 )
 
 type NotFoundApplicationError struct {
+	code string
 	error
 }
+
+func (e NotFoundApplicationError) Code() string {
+	return e.code
+}
+
 type TimeoutExceededApplicationError struct {
+	code string
 	error
+}
+
+func (e TimeoutExceededApplicationError) Code() string {
+	return e.code
 }
 
 type IntegrationApplicationError struct {
+	code string
 	error
+}
+
+func (e IntegrationApplicationError) Code() string {
+	return e.code
 }
 
 type ValidationApplicationError struct {
+	code string
 	error
+}
+
+func (e ValidationApplicationError) Code() string {
+	return e.code
+}
+
+type MaintenanceError struct {
+	code string
+	error
+}
+
+func IsMaintenanceError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var maintenanceErr MaintenanceError
+	return errors.As(err, &maintenanceErr)
+}
+
+func (e MaintenanceError) Code() string {
+	return e.code
+}
+
+type ManyRequestsApplicationError struct {
+	code string
+	error
+}
+
+func (e ManyRequestsApplicationError) Code() string {
+	return e.code
+}
+
+func IsManyRequestsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var manyRequestsErr ManyRequestsApplicationError
+	return errors.As(err, &manyRequestsErr)
+
+}
+
+type BadRequestError struct {
+	code string
+	error
+}
+
+func (e BadRequestError) Code() string {
+	return e.code
+}
+
+type UnauthorizedApplicationError struct {
+	code string
+	error
+}
+
+func (e UnauthorizedApplicationError) Code() string {
+	return e.code
 }
 
 type ForbiddenApplicationError struct {
+	code string
 	error
 }
 
-type BadRequestApplicationError struct {
-	error
+func (e ForbiddenApplicationError) Code() string {
+	return e.code
 }
 
 type errorWrapper interface {
@@ -76,6 +192,10 @@ func (err WrappedError) GetOriginalError() error {
 	return err.originalError
 }
 
+func (err WrappedError) Unwrap() error {
+	return err.originalError
+}
+
 func Wrap(err error, messages ...string) error {
 	return &WrappedError{
 		originalError: err,
@@ -85,7 +205,6 @@ func Wrap(err error, messages ...string) error {
 }
 
 func GetOriginalError(err error) error {
-
 	wrappedErr, ok := err.(errorWrapper)
 	if ok {
 		return wrappedErr.GetOriginalError()
@@ -104,47 +223,65 @@ func caller() string {
 	return pathArr[len(pathArr)-1]
 }
 
-func NewIntegrationApplicationError(err error) error {
-	return newApplicationError(IntegrationApplicationErrorType, err)
+func NewIntegrationApplicationError(code string, err error) error {
+	return newApplicationError(code, IntegrationApplicationErrorType, err)
 }
 
-func NewTimeoutExceededApplicationError(err error) error {
-	return newApplicationError(TimeoutExceededApplicationErrorType, err)
+func NewTimeoutExceededApplicationError(code string, err error) error {
+	return newApplicationError(code, TimeoutExceededApplicationErrorType, err)
 }
 
-func NewNotFoundApplicationError(err error) error {
-	return newApplicationError(NotFoundApplicationErrorType, err)
+func NewNotFoundApplicationError(code string, err error) error {
+	return newApplicationError(code, NotFoundApplicationErrorType, err)
 }
 
-func NewValidationApplicationError(err error) error {
-	return newApplicationError(ValidationApplicationErrorType, err)
+func NewBadRequestError(code string, err error) error {
+	return newApplicationError(code, BadRequestErrorType, err)
 }
 
-func NewBadRequestApplicationError(err error) error {
-	return newApplicationError(BadRequestApplicationErrorType, err)
+func NewValidationApplicationError(code string, err error) error {
+	return newApplicationError(code, ValidationApplicationErrorType, err)
 }
 
-func NewForbiddenApplicationError(err error) error {
-	return newApplicationError(ForbiddenApplicationErrorType, err)
+func NewMaintenanceError(code string, err error) error {
+	return newApplicationError(code, MaintenanceErrorType, err)
 }
 
-func newApplicationError(errType string, err error) error {
+func NewManyRequestsApplicationError(code string, err error) error {
+	return newApplicationError(code, ManyRequestsApplicationErrorType, err)
+}
+
+func NewUnauthorizedApplicationError(code string, err error) error {
+	return newApplicationError(code, UnauthorizedApplicationErrorType, err)
+}
+
+func NewForbiddenApplicationError(code string, err error) error {
+	return newApplicationError(code, ForbiddenApplicationErrorType, err)
+}
+
+func newApplicationError(code, errType string, err error) error {
 	if err == nil {
 		return err
 	}
 	switch errType {
 	case NotFoundApplicationErrorType:
-		return _errors.Wrap(NotFoundApplicationError{err}, 1)
+		return _errors.Wrap(NotFoundApplicationError{code, err}, 1)
 	case TimeoutExceededApplicationErrorType:
-		return _errors.Wrap(TimeoutExceededApplicationError{err}, 1)
+		return _errors.Wrap(TimeoutExceededApplicationError{code, err}, 1)
 	case IntegrationApplicationErrorType:
-		return _errors.Wrap(IntegrationApplicationError{err}, 1)
+		return _errors.Wrap(IntegrationApplicationError{code, err}, 1)
 	case ValidationApplicationErrorType:
-		return _errors.Wrap(ValidationApplicationError{err}, 1)
-	case BadRequestApplicationErrorType:
-		return _errors.Wrap(BadRequestApplicationError{err}, 1)
+		return _errors.Wrap(ValidationApplicationError{code, err}, 1)
+	case MaintenanceErrorType:
+		return _errors.Wrap(MaintenanceError{code: code, error: err}, 1)
+	case ManyRequestsApplicationErrorType:
+		return _errors.Wrap(ManyRequestsApplicationError{code: code, error: err}, 1)
+	case UnauthorizedApplicationErrorType:
+		return _errors.Wrap(UnauthorizedApplicationError{code: code, error: err}, 1)
 	case ForbiddenApplicationErrorType:
-		return _errors.Wrap(ForbiddenApplicationError{err}, 1)
+		return _errors.Wrap(ForbiddenApplicationError{code: code, error: err}, 1)
+	case BadRequestErrorType:
+		return _errors.Wrap(BadRequestError{code: code, error: err}, 1)
 	default:
 		return _errors.Wrap(err, 1)
 	}

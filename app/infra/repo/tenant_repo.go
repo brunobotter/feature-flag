@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/brunobotter/feature-flag/application"
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/domain"
 	apprepo "github.com/brunobotter/feature-flag/application/repo"
@@ -40,7 +41,7 @@ func (r *TenantPgRepo) Create(ctx context.Context, cmd command.CreateTenant) (te
 		tenant.CreatedAt,
 	).Scan(&createdAt)
 	if err != nil {
-		return nil, err
+		return nil, application.Wrap(err)
 	}
 	tenant.CreatedAt = createdAt
 	return tenant, nil

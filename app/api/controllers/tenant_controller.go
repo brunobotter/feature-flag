@@ -20,15 +20,15 @@ func NewTenantController(tenantUseCase usecase.TenantUseCase, logger logger.Logg
 	}
 }
 
-func (c *TenantController) CreateTenant(request requests.TenantRequest) *http.HttpResponse {
+func (c *TenantController) CreateTenant(request *requests.TenantRequest) *http.HttpResponse {
 
 	cmd := command.CreateTenant{
 		Name: request.Name,
 	}
 
-	tenant, err := c.tenantUseCase.Create(request.Request.Context(), cmd, c.log)
+	tenant, err := c.tenantUseCase.Create(request.Context(), cmd, c.log)
 	if err != nil {
-		return http.BadRequest(err.Error())
+		return http.HandleError(request.Context(), err, c.log)
 	}
 
 	return http.Created(tenant)
