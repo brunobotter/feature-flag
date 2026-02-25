@@ -2,10 +2,10 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /src
 RUN apk add --no-cache wget
 
-COPY go.mod go.sum ./
+COPY app/go.mod app/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY app/. .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/feature-flag .
 
 FROM alpine:latest
