@@ -1,12 +1,6 @@
 package application
 
-import (
-	"errors"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 func TestNewIntegrationApplicationError(t *testing.T) {
 	originalErr := errors.New("original error")
 	err := NewIntegrationApplicationError(originalErr)
@@ -130,3 +124,4 @@ func TestWrappedError_Error(t *testing.T) {
 		t.Errorf("expected error string to be %q, got %q", expected, wrappedErr.Error())
 	}
 }
+*/

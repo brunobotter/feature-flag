@@ -39,5 +39,5 @@ func (i *fieldValidatorControl) Error() error {
 	for _, field := range i.invalidFields {
 		message += field.Field + ": " + field.Error + ", "
 	}
-	return application.NewValidationApplicationError(errors.New(message[:len(message)-2]))
+	return application.NewValidationApplicationError(application.ValidationDomain, errors.New(message[:len(message)-2]))
 }

@@ -85,6 +85,15 @@ func (e IntegrationApplicationError) Code() string {
 	return e.code
 }
 
+type BadRequestApplicationError struct {
+	code string
+	error
+}
+
+func (e BadRequestApplicationError) Code() string {
+	return e.code
+}
+
 type ValidationApplicationError struct {
 	code string
 	error

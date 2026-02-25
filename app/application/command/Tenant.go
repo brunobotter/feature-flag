@@ -12,5 +12,5 @@ type CreateTenant struct {
 func (c *CreateTenant) Validate() error {
 	v := validator.NewFieldValidatorControl()
 	v.AddFieldValidator("name", c.Name, validator.Required())
-	return application.NewValidationApplicationError(v.Error())
+	return application.NewValidationApplicationError(application.ValidationDomain, v.Error())
 }
