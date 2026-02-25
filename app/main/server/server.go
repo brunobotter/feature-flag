@@ -31,7 +31,7 @@ func NewServer(container container.Container) (*Server, error) {
 		echo:      echo.New(),
 	}
 	container.Resolve(&server.config)
-
+	container.Resolve(&server.logger)
 	server.setup()
 	return server, nil
 }
@@ -55,7 +55,7 @@ func (s *Server) setup() {
 
 	s.container.NamedSingleton("Routes", func() router.Router {
 		return adapterRouter.Group("/api/v1/", func(group router.RouteGroup) {
-			group.Use(middlewares.CommonMiddlewares(s.logger, s.config)...)
+			group.Use(middlewares.CommonMiddlewares(log, cfg)...)
 		})
 	})
 

@@ -6,18 +6,23 @@ import (
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/domain"
 	"github.com/brunobotter/feature-flag/application/repo"
+	"github.com/brunobotter/feature-flag/infra/logger"
 )
 
 type TenantService interface {
 	Create(ctx context.Context, cmd command.CreateTenant) (*domain.TenantDomain, error)
 }
 
-func NewTenantService(repo repo.TenantRepository) TenantService {
-	return &tenantService{repo: repo}
+func NewTenantService(repo repo.TenantRepository, log logger.Logger) TenantService {
+	return &tenantService{
+		repo: repo,
+		log:  log,
+	}
 }
 
 type tenantService struct {
 	repo repo.TenantRepository
+	log  logger.Logger
 }
 
 func (s *tenantService) Create(ctx context.Context, cmd command.CreateTenant) (*domain.TenantDomain, error) {

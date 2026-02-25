@@ -4,6 +4,10 @@ func List() []any {
 	return []any{
 		NewConfigServiceProvider(),
 		NewCliServiceProvider(),
-		NewHandlerServiceProvider(),
+		NewDatabaseServiceProvider(),
+		NewRepositoryProvider(),
+		NewServiceProvider(),
+		NewUseCaseProvider(),
+		NewControllereProvider(),
 	}
 }

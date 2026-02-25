@@ -13,12 +13,16 @@ type TenantUseCase interface {
 	Create(ctx context.Context, cmd command.CreateTenant, log logger.Logger) (*domain.TenantDomain, error)
 }
 
-func NewTenantUseCase(service service.TenantService) TenantUseCase {
-	return &tenantUseCase{service: service}
+func NewTenantUseCase(service service.TenantService, log logger.Logger) TenantUseCase {
+	return &tenantUseCase{
+		service: service,
+		log:     log,
+	}
 }
 
 type tenantUseCase struct {
 	service service.TenantService
+	log     logger.Logger
 }
 
 func (u *tenantUseCase) Create(context context.Context, cmd command.CreateTenant, log logger.Logger) (*domain.TenantDomain, error) {
