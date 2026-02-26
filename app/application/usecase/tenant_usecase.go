@@ -13,7 +13,7 @@ import (
 type TenantUseCase interface {
 	Create(ctx context.Context, cmd command.CreateTenant, log logger.Logger) (*domain.TenantDomain, error)
 	GetById(ctx context.Context, id string, log logger.Logger) (*domain.TenantDomain, error)
-	GetAllTenant(ctx context.Context, log logger.Logger) ([]*domain.TenantDomain, error)
+	GetAllTenant(ctx context.Context, cmd command.ListTenant, log logger.Logger) (*domain.TenantPage, error)
 }
 
 func NewTenantUseCase(service service.TenantService, log logger.Logger) TenantUseCase {
@@ -46,8 +46,11 @@ func (u *tenantUseCase) GetById(ctx context.Context, id string, log logger.Logge
 	}
 	return tenant, nil
 }
-func (u *tenantUseCase) GetAllTenant(ctx context.Context, log logger.Logger) ([]*domain.TenantDomain, error) {
-	tenant, err := u.service.GetAllTenant(ctx)
+func (u *tenantUseCase) GetAllTenant(ctx context.Context, cmd command.ListTenant, log logger.Logger) (*domain.TenantPage, error) {
+	if err := cmd.Validate(); err != nil {
+		return nil, application.Wrap(err)
+	}
+	tenant, err := u.service.GetAllTenant(ctx, cmd.Page, cmd.Limit)
 	if err != nil {
 		return nil, application.Wrap(err)
 	}

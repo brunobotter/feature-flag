@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/brunobotter/feature-flag/api/http"
 	"github.com/brunobotter/feature-flag/api/requests"
 	"github.com/brunobotter/feature-flag/api/viewmodels"
@@ -48,10 +50,25 @@ func (c *TenantController) GetByIdTenant(request *requests.TenantRequest) *http.
 }
 
 func (c *TenantController) GetAllTenant(request *requests.TenantRequest) *http.HttpResponse {
-	tenants, err := c.tenantUseCase.GetAllTenant(request.Context(), c.log)
+	page := parseOrDefault(request.QueryParam("page"), 1)
+	limit := parseOrDefault(request.QueryParam("limit"), 20)
+	cmd := command.ListTenant{Page: page, Limit: limit}
+
+	tenants, err := c.tenantUseCase.GetAllTenant(request.Context(), cmd, c.log)
 	if err != nil {
 		return http.HandleError(request.Context(), err, c.log)
 	}
-	vm := viewmodels.NewTenantListViewModel(tenants)
+	vm := viewmodels.NewTenantPageViewModel(tenants)
 	return http.Ok(vm)
+}
+
+func parseOrDefault(value string, fallback int) int {
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }

@@ -13,7 +13,7 @@ import (
 type TenantService interface {
 	Create(ctx context.Context, cmd command.CreateTenant) (*domain.TenantDomain, error)
 	GetById(ctx context.Context, id string) (*domain.TenantDomain, error)
-	GetAllTenant(ctx context.Context) ([]*domain.TenantDomain, error)
+	GetAllTenant(ctx context.Context, page, limit int) (*domain.TenantPage, error)
 }
 
 func NewTenantService(repo repo.TenantRepository, log logger.Logger) TenantService {
@@ -42,8 +42,8 @@ func (s *tenantService) GetById(ctx context.Context, id string) (*domain.TenantD
 	}
 	return tenant, nil
 }
-func (s *tenantService) GetAllTenant(ctx context.Context) ([]*domain.TenantDomain, error) {
-	tenant, err := s.repo.GetAll(ctx)
+func (s *tenantService) GetAllTenant(ctx context.Context, page, limit int) (*domain.TenantPage, error) {
+	tenant, err := s.repo.GetAll(ctx, page, limit)
 
 	if err != nil {
 		return nil, application.Wrap(err)

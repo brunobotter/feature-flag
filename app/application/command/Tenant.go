@@ -14,3 +14,13 @@ func (c *CreateTenant) Validate() error {
 	v.AddFieldValidator("name", c.Name, validator.Required())
 	return application.NewValidationApplicationError(application.ValidationDomain, v.Error())
 }
+
+type ListTenant struct {
+	Page  int
+	Limit int
+}
+
+func (c *ListTenant) Validate() error {
+	v := validator.NewFieldValidatorControl()
+	return application.NewValidationApplicationError(application.ValidationDomain, v.Error())
+}

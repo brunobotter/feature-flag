@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"math"
 
 	"github.com/brunobotter/feature-flag/application"
 	"github.com/brunobotter/feature-flag/application/command"
@@ -51,30 +52,46 @@ func (r *TenantPgRepo) GetById(ctx context.Context, id string) (*domain.TenantDo
     from tenants
 	where id = $1;
   `
-	rows, err := r.db.Query(ctx, q, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 	tenant := &domain.TenantDomain{}
-	err = r.db.QueryRow(ctx, q,
+	err := r.db.QueryRow(ctx, q,
 		id,
 	).Scan(&tenant.Id, &tenant.Name, &tenant.CreatedAt, &tenant.UpdatedAt)
 	if err != nil {
+		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+			return nil, friendlyErr
+		}
 		return nil, application.Wrap(err)
 	}
 
 	return tenant, nil
 }
 
-func (r *TenantPgRepo) GetAll(ctx context.Context) ([]*domain.TenantDomain, error) {
-	const q = `
-		select id, name, created_at, updated_at
+func (r *TenantPgRepo) GetAll(ctx context.Context, page, limit int) (*domain.TenantPage, error) {
+	const countQ = `
+		select count(1)
 		from tenants;
 	`
+	const q = `
+		select id, name, created_at, updated_at
+		from tenants
+		order by created_at desc
+		limit $1 offset $2;
+	`
 
-	rows, err := r.db.Query(ctx, q)
+	offset := (page - 1) * limit
+	total := 0
+	if err := r.db.QueryRow(ctx, countQ).Scan(&total); err != nil {
+		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+			return nil, friendlyErr
+		}
+		return nil, application.Wrap(err)
+	}
+
+	rows, err := r.db.Query(ctx, q, limit, offset)
 	if err != nil {
+		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+			return nil, friendlyErr
+		}
 		return nil, application.Wrap(err)
 	}
 	defer rows.Close()
@@ -84,18 +101,29 @@ func (r *TenantPgRepo) GetAll(ctx context.Context) ([]*domain.TenantDomain, erro
 	for rows.Next() {
 		t := &domain.TenantDomain{}
 		if err := rows.Scan(&t.Id, &t.Name, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+				return nil, friendlyErr
+			}
 			return nil, application.Wrap(err)
 		}
 		tenants = append(tenants, t)
 	}
 
 	if err := rows.Err(); err != nil {
+		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+			return nil, friendlyErr
+		}
 		return nil, application.Wrap(err)
 	}
 
-	return tenants, nil
+	return &domain.TenantPage{
+		Items:      tenants,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: int(math.Ceil(float64(total) / float64(limit))),
+	}, nil
 }
-
 func mapDatabaseError(err error) error {
 	return mapPostgresValidationError(err, postgresValidationMap{
 		ConstraintMessages: map[string]map[string]string{

@@ -22,6 +22,14 @@ func NewTenantViewModel(t *domain.TenantDomain) TenantViewModel {
 	}
 }
 
+type TenantPageViewModel struct {
+	Data       []TenantViewModel `json:"data"`
+	Page       int               `json:"page"`
+	Limit      int               `json:"limit"`
+	Total      int               `json:"total"`
+	TotalPages int               `json:"total_pages"`
+}
+
 func NewTenantListViewModel(tenants []*domain.TenantDomain) []TenantViewModel {
 	list := make([]TenantViewModel, 0, len(tenants))
 
@@ -30,6 +38,15 @@ func NewTenantListViewModel(tenants []*domain.TenantDomain) []TenantViewModel {
 	}
 
 	return list
+}
+func NewTenantPageViewModel(tenants *domain.TenantPage) TenantPageViewModel {
+	return TenantPageViewModel{
+		Data:       NewTenantListViewModel(tenants.Items),
+		Page:       tenants.Page,
+		Limit:      tenants.Limit,
+		Total:      tenants.Total,
+		TotalPages: tenants.TotalPages,
+	}
 }
 
 // dd/MM/yyyy HH:mm:ss
