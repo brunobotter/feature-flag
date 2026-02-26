@@ -9,6 +9,7 @@ import (
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/usecase"
 	"github.com/brunobotter/feature-flag/infra/logger"
+	"github.com/brunobotter/feature-flag/util/shared"
 )
 
 type TenantController struct {
@@ -50,9 +51,7 @@ func (c *TenantController) GetByIdTenant(request *requests.TenantRequest) *http.
 }
 
 func (c *TenantController) GetAllTenant(request *requests.TenantRequest) *http.HttpResponse {
-	page := parseOrDefault(request.QueryParam("page"), 1)
-	limit := parseOrDefault(request.QueryParam("limit"), 20)
-	cmd := command.ListTenant{Page: page, Limit: limit}
+	cmd := buildListTenantCommand(request)
 
 	tenants, err := c.tenantUseCase.GetAllTenant(request.Context(), cmd, c.log)
 	if err != nil {
@@ -62,13 +61,20 @@ func (c *TenantController) GetAllTenant(request *requests.TenantRequest) *http.H
 	return http.Ok(vm)
 }
 
-func parseOrDefault(value string, fallback int) int {
+func buildListTenantCommand(request *requests.TenantRequest) command.ListTenant {
+	return command.ListTenant{
+		Page:  parsePaginationParam(request.QueryParam("page"), shared.DefaultPage),
+		Limit: parsePaginationParam(request.QueryParam("limit"), shared.DefaultLimit),
+	}
+}
+
+func parsePaginationParam(value string, fallback int) int {
 	if value == "" {
 		return fallback
 	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil {
-		return fallback
+		return 0
 	}
 	return parsed
 }

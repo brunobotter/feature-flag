@@ -5,6 +5,8 @@ import (
 	"github.com/brunobotter/feature-flag/application/validator"
 )
 
+const maxPaginationLimit = 100
+
 type CreateTenant struct {
 	Name string
 }
@@ -22,5 +24,7 @@ type ListTenant struct {
 
 func (c *ListTenant) Validate() error {
 	v := validator.NewFieldValidatorControl()
+	v.AddFieldValidator("page", c.Page, validator.MinNumber(1))
+	v.AddFieldValidator("limit", c.Limit, validator.MinNumber(1), validator.MaxNumber(maxPaginationLimit))
 	return application.NewValidationApplicationError(application.ValidationDomain, v.Error())
 }
