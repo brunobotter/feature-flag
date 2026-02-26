@@ -22,22 +22,26 @@ func NewEnviromentController(enviromentUsecase usecase.EnviromentUsecase, log lo
 }
 
 func (c *EnviromentController) GetAllEnviromentByTenantId(request *requests.Envirement) *http.HttpResponse {
-	env := request.Param("env")
-	tenantId := request.Param("tenantId")
 
 	cmd := command.GetAllEnviroment{
-		TenantId: tenantId,
-		Env:      env,
+		TenantId: request.Param("tenantId"),
 	}
-	tenant, err := c.enviromentUsecase.GetAllByTenantId(request.Context(), cmd, c.log)
+	enviroments, err := c.enviromentUsecase.GetAllByTenantId(request.Context(), cmd, c.log)
 	if err != nil {
 		return http.HandleError(request.Context(), err, c.log)
 	}
-	vm := viewmodels.NewTenantViewModel(tenant)
-	return http.Ok(vm)
+	return http.Ok(viewmodels.NewEnviromentListViewModel(enviroments))
 
 }
 
 func (c *EnviromentController) GetEnviromentByTenantId(request *requests.Envirement) *http.HttpResponse {
-	return nil
+	cmd := command.GetAllEnviroment{
+		TenantId: request.Param("tenantId"),
+		Env:      request.Param("env"),
+	}
+	enviroment, err := c.enviromentUsecase.GetEnviromentByTenantId(request.Context(), cmd, c.log)
+	if err != nil {
+		return http.HandleError(request.Context(), err, c.log)
+	}
+	return http.Ok(viewmodels.NewEnviromentViewModel(enviroment))
 }

@@ -19,4 +19,7 @@ func (p *ControllerProvider) Register(c container.Container) {
 	c.Singleton(func(tenantUseCase usecase.TenantUseCase, log logger.Logger) *controllers.TenantController {
 		return controllers.NewTenantController(tenantUseCase, log)
 	})
+	c.Singleton(func(enviromentUsecase usecase.EnviromentUsecase, log logger.Logger) *controllers.EnviromentController {
+		return controllers.NewEnviromentController(enviromentUsecase, log)
+	})
 }

@@ -11,7 +11,8 @@ import (
 )
 
 type EnviromentService interface {
-	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.TenantDomain, error)
+	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) ([]*domain.EnviromentDomain, error)
+	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error)
 }
 
 func NewEnviromentService(repo repo.EnviromentRepository, log logger.Logger) EnviromentService {
@@ -26,10 +27,18 @@ type enviromentService struct {
 	log  logger.Logger
 }
 
-func (s *enviromentService) GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.TenantDomain, error) {
-	tenant, err := s.repo.GetAllByTenantId(ctx, cmd)
+func (s *enviromentService) GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) ([]*domain.EnviromentDomain, error) {
+	enviroments, err := s.repo.GetAllByTenantId(ctx, cmd)
 	if err != nil {
 		return nil, application.Wrap(err)
 	}
-	return tenant, nil
+	return enviroments, nil
+}
+
+func (s *enviromentService) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error) {
+	enviroment, err := s.repo.GetEnviromentByTenantId(ctx, cmd)
+	if err != nil {
+		return nil, application.Wrap(err)
+	}
+	return enviroment, nil
 }

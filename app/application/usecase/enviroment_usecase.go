@@ -11,7 +11,8 @@ import (
 )
 
 type EnviromentUsecase interface {
-	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.TenantDomain, error)
+	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) ([]*domain.EnviromentDomain, error)
+	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error)
 }
 
 func NewEnviromentUsecase(service service.EnviromentService, log logger.Logger) EnviromentUsecase {
@@ -26,14 +27,26 @@ type enviromentUsecase struct {
 	log     logger.Logger
 }
 
-func (u *enviromentUsecase) GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.TenantDomain, error) {
+func (u *enviromentUsecase) GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) ([]*domain.EnviromentDomain, error) {
 	err := cmd.Validate()
 	if err != nil {
 		return nil, application.Wrap(err)
 	}
-	tenant, err := u.service.GetAllByTenantId(ctx, cmd, log)
+	enviroments, err := u.service.GetAllByTenantId(ctx, cmd, log)
 	if err != nil {
 		return nil, application.Wrap(err)
 	}
-	return tenant, nil
+	return enviroments, nil
+}
+
+func (u *enviromentUsecase) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error) {
+	err := cmd.Validate()
+	if err != nil {
+		return nil, application.Wrap(err)
+	}
+	enviroment, err := u.service.GetEnviromentByTenantId(ctx, cmd, log)
+	if err != nil {
+		return nil, application.Wrap(err)
+	}
+	return enviroment, nil
 }

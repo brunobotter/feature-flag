@@ -16,4 +16,7 @@ func (p *UseCaseProvider) Register(c container.Container) {
 	c.Singleton(func(tenantService service.TenantService, log logger.Logger) usecase.TenantUseCase {
 		return usecase.NewTenantUseCase(tenantService, log)
 	})
+	c.Singleton(func(enviromentService service.EnviromentService, log logger.Logger) usecase.EnviromentUsecase {
+		return usecase.NewEnviromentUsecase(enviromentService, log)
+	})
 }

@@ -17,4 +17,7 @@ func (p *ServiceProvider) Register(c container.Container) {
 	c.Singleton(func(tenantRepo repo.TenantRepository, log logger.Logger) service.TenantService {
 		return service.NewTenantService(tenantRepo, log)
 	})
+	c.Singleton(func(enviromentRepo repo.EnviromentRepository, log logger.Logger) service.EnviromentService {
+		return service.NewEnviromentService(enviromentRepo, log)
+	})
 }

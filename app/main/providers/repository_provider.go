@@ -18,4 +18,7 @@ func (p *RepositoryProvider) Register(c container.Container) {
 	c.Singleton(func(db *pgxpool.Pool, log logger.Logger) repo.TenantRepository {
 		return infraRepo.NewTenantRepo(db, log)
 	})
+	c.Singleton(func(db *pgxpool.Pool, log logger.Logger) repo.EnviromentRepository {
+		return infraRepo.NewEnviromentRepo(db, log)
+	})
 }
