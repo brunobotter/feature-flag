@@ -12,8 +12,8 @@ ambiente.
 ------------------------------------------------------------------------
 
 ## 📦 Épico B --- Repositórios Postgres
-
-### TenantRepository
+Finalizado
+### TenantRepository 
 
 -   Create
 -   List

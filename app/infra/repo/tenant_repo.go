@@ -30,16 +30,36 @@ func (r *TenantPgRepo) Create(ctx context.Context, cmd command.CreateTenant) (te
     values ($1)
     returning id, created_at;
   `
-	tenant = &domain.TenantDomain{
-		Name: cmd.Name,
+	const createDefaultEnvironmentsQ = `
+    insert into environments (tenant_id, name)
+    values
+      ($1, 'dev'),
+      ($1, 'stg'),
+      ($1, 'prod');
+  `
+
+	tenant = &domain.TenantDomain{Name: cmd.Name}
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, application.Wrap(err)
 	}
-	err = r.db.QueryRow(ctx, q,
-		tenant.Name,
-	).Scan(&tenant.Id, &tenant.CreatedAt)
+	defer tx.Rollback(ctx)
+	err = tx.QueryRow(ctx, q, tenant.Name).Scan(&tenant.Id, &tenant.CreatedAt)
 	if err != nil {
 		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
 			return nil, friendlyErr
 		}
+		return nil, application.Wrap(err)
+	}
+	if _, err = tx.Exec(ctx, createDefaultEnvironmentsQ, tenant.Id); err != nil {
+		if friendlyErr := mapDatabaseError(err); friendlyErr != nil {
+			return nil, friendlyErr
+		}
+		return nil, application.Wrap(err)
+	}
+
+	if err = tx.Commit(ctx); err != nil {
 		return nil, application.Wrap(err)
 	}
 
