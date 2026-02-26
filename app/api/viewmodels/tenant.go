@@ -10,6 +10,7 @@ type TenantViewModel struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 func NewTenantViewModel(t *domain.TenantDomain) TenantViewModel {
@@ -17,7 +18,18 @@ func NewTenantViewModel(t *domain.TenantDomain) TenantViewModel {
 		Id:        t.Id,
 		Name:      t.Name,
 		CreatedAt: FormatBRDateTime(t.CreatedAt),
+		UpdatedAt: FormatBRDateTime(t.UpdatedAt),
 	}
+}
+
+func NewTenantListViewModel(tenants []*domain.TenantDomain) []TenantViewModel {
+	list := make([]TenantViewModel, 0, len(tenants))
+
+	for _, t := range tenants {
+		list = append(list, NewTenantViewModel(t))
+	}
+
+	return list
 }
 
 // dd/MM/yyyy HH:mm:ss

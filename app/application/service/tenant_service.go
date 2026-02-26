@@ -12,6 +12,8 @@ import (
 
 type TenantService interface {
 	Create(ctx context.Context, cmd command.CreateTenant) (*domain.TenantDomain, error)
+	GetById(ctx context.Context, id string) (*domain.TenantDomain, error)
+	GetAllTenant(ctx context.Context) ([]*domain.TenantDomain, error)
 }
 
 func NewTenantService(repo repo.TenantRepository, log logger.Logger) TenantService {
@@ -28,6 +30,21 @@ type tenantService struct {
 
 func (s *tenantService) Create(ctx context.Context, cmd command.CreateTenant) (*domain.TenantDomain, error) {
 	tenant, err := s.repo.Create(ctx, cmd)
+	if err != nil {
+		return nil, application.Wrap(err)
+	}
+	return tenant, nil
+}
+func (s *tenantService) GetById(ctx context.Context, id string) (*domain.TenantDomain, error) {
+	tenant, err := s.repo.GetById(ctx, id)
+	if err != nil {
+		return nil, application.Wrap(err)
+	}
+	return tenant, nil
+}
+func (s *tenantService) GetAllTenant(ctx context.Context) ([]*domain.TenantDomain, error) {
+	tenant, err := s.repo.GetAll(ctx)
+
 	if err != nil {
 		return nil, application.Wrap(err)
 	}

@@ -21,7 +21,7 @@ func NewTenantController(tenantUseCase usecase.TenantUseCase, logger logger.Logg
 	}
 }
 
-func (c *TenantController) CreateTenant(request *requests.TenantRequest) *http.HttpResponse {
+func (c *TenantController) CreateTenant(request *requests.CreateTenantRequest) *http.HttpResponse {
 
 	cmd := command.CreateTenant{
 		Name: request.Name,
@@ -34,4 +34,24 @@ func (c *TenantController) CreateTenant(request *requests.TenantRequest) *http.H
 
 	vm := viewmodels.NewTenantViewModel(tenant)
 	return http.Created(vm)
+}
+
+func (c *TenantController) GetByIdTenant(request *requests.TenantRequest) *http.HttpResponse {
+	id := request.Param("id")
+
+	tenant, err := c.tenantUseCase.GetById(request.Context(), id, c.log)
+	if err != nil {
+		return http.HandleError(request.Context(), err, c.log)
+	}
+	vm := viewmodels.NewTenantViewModel(tenant)
+	return http.Ok(vm)
+}
+
+func (c *TenantController) GetAllTenant(request *requests.TenantRequest) *http.HttpResponse {
+	tenants, err := c.tenantUseCase.GetAllTenant(request.Context(), c.log)
+	if err != nil {
+		return http.HandleError(request.Context(), err, c.log)
+	}
+	vm := viewmodels.NewTenantListViewModel(tenants)
+	return http.Ok(vm)
 }

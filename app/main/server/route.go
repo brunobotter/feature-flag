@@ -13,5 +13,7 @@ func (s *Server) setupApiRouter(healthController *controllers.HealthHandler, ten
 
 	routs.Group("/tenant", func(group router.RouteGroup) {
 		group.POST("", tenantController.CreateTenant)
+		group.GET("/:id", tenantController.GetByIdTenant)
+		group.GET("", tenantController.GetAllTenant)
 	})
 }
