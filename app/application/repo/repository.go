@@ -15,5 +15,5 @@ type TenantRepository interface {
 
 type EnviromentRepository interface {
 	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment) ([]*domain.EnviromentDomain, error)
-	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment) (*domain.EnviromentDomain, error)
+	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllByEnvEnviroment) (*domain.EnviromentDomain, error)
 }

@@ -68,7 +68,7 @@ func (r *EnviromentPgRepo) GetAllByTenantId(ctx context.Context, cmd command.Get
 	return enviroments, nil
 }
 
-func (r *EnviromentPgRepo) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment) (*domain.EnviromentDomain, error) {
+func (r *EnviromentPgRepo) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllByEnvEnviroment) (*domain.EnviromentDomain, error) {
 	const q = `
 		select id, tenant_id, name, created_at, updated_at
 		from environments

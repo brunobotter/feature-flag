@@ -12,7 +12,7 @@ import (
 
 type EnviromentService interface {
 	GetAllByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) ([]*domain.EnviromentDomain, error)
-	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error)
+	GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllByEnvEnviroment, log logger.Logger) (*domain.EnviromentDomain, error)
 }
 
 func NewEnviromentService(repo repo.EnviromentRepository, log logger.Logger) EnviromentService {
@@ -35,7 +35,7 @@ func (s *enviromentService) GetAllByTenantId(ctx context.Context, cmd command.Ge
 	return enviroments, nil
 }
 
-func (s *enviromentService) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllEnviroment, log logger.Logger) (*domain.EnviromentDomain, error) {
+func (s *enviromentService) GetEnviromentByTenantId(ctx context.Context, cmd command.GetAllByEnvEnviroment, log logger.Logger) (*domain.EnviromentDomain, error) {
 	enviroment, err := s.repo.GetEnviromentByTenantId(ctx, cmd)
 	if err != nil {
 		return nil, application.Wrap(err)

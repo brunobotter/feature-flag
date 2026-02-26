@@ -35,7 +35,7 @@ func (c *EnviromentController) GetAllEnviromentByTenantId(request *requests.Envi
 }
 
 func (c *EnviromentController) GetEnviromentByTenantId(request *requests.Envirement) *http.HttpResponse {
-	cmd := command.GetAllEnviroment{
+	cmd := command.GetAllByEnvEnviroment{
 		TenantId: request.Param("tenantId"),
 		Env:      request.Param("env"),
 	}
