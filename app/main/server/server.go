@@ -54,7 +54,7 @@ func (s *Server) setup() {
 	adapterRouter := adapters.NewEchoRouterAdapter(s.echo)
 
 	s.container.NamedSingleton("Routes", func() router.Router {
-		return adapterRouter.Group("/api/v1/", func(group router.RouteGroup) {
+		return adapterRouter.Group("", func(group router.RouteGroup) {
 			group.Use(middlewares.CommonMiddlewares(log, cfg)...)
 		})
 	})

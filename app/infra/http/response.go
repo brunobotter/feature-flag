@@ -26,5 +26,13 @@ func (s *response) Body() ([]byte, error) {
 	return s.body, nil
 }
 func (s *response) Header(key string) map[string][]string {
-	return s.resp.Header
+	if key == "" {
+		return s.resp.Header
+	}
+
+	if values, found := s.resp.Header[key]; found {
+		return map[string][]string{key: values}
+	}
+
+	return map[string][]string{}
 }

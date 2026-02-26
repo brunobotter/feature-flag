@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"time"
 
 	"github.com/brunobotter/feature-flag/application"
 	"github.com/brunobotter/feature-flag/application/command"
@@ -26,23 +25,19 @@ func NewTenantRepo(db *pgxpool.Pool, log logger.Logger) apprepo.TenantRepository
 
 func (r *TenantPgRepo) Create(ctx context.Context, cmd command.CreateTenant) (tenant *domain.TenantDomain, err error) {
 	const q = `
-    insert into tenants (name, created_at)
-    values ($1, $2)
-    returning created_at;
+    insert into tenants (name)
+    values ($1)
+    returning id, created_at;
   `
-	var createdAt time.Time
 	tenant = &domain.TenantDomain{
-		Name:      cmd.Name,
-		CreatedAt: time.Now(),
+		Name: cmd.Name,
 	}
 	err = r.db.QueryRow(ctx, q,
-		tenant.Id,
 		tenant.Name,
-		tenant.CreatedAt,
-	).Scan(&createdAt)
+	).Scan(&tenant.Id, &tenant.CreatedAt)
 	if err != nil {
 		return nil, application.Wrap(err)
 	}
-	tenant.CreatedAt = createdAt
+
 	return tenant, nil
 }

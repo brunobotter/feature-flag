@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/brunobotter/feature-flag/api/http"
 	"github.com/brunobotter/feature-flag/api/requests"
+	"github.com/brunobotter/feature-flag/api/viewmodels"
 	"github.com/brunobotter/feature-flag/application/command"
 	"github.com/brunobotter/feature-flag/application/usecase"
 	"github.com/brunobotter/feature-flag/infra/logger"
@@ -31,5 +32,6 @@ func (c *TenantController) CreateTenant(request *requests.TenantRequest) *http.H
 		return http.HandleError(request.Context(), err, c.log)
 	}
 
-	return http.Created(tenant)
+	vm := viewmodels.NewTenantViewModel(tenant)
+	return http.Created(vm)
 }
